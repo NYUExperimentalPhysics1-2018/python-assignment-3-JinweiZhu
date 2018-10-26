@@ -215,7 +215,6 @@ def playGame(tank1box, tank2box, obstacleBox, g = 9.8):
             playerNum=1
             if keepgoing=="\n":
                 returnvalue=oneTurn(tank1box, tank2box, obstacleBox, playerNum, g = 9.8)
-            returnvalue=oneTurn(tank1box, tank2box, obstacleBox, playerNum, g = 9.8)
     else:
         print("Congratulations. Player:", playerNum)
     
