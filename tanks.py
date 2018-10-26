@@ -8,15 +8,16 @@ Created on Thu Oct 18 19:18:02 2018
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 tank1Color = 'b'
 tank2Color = 'r'
 obstacleColor = 'k'
 
 ##### functions you need to implement #####
 def trajectory (x0,y0,v,theta,g = 9.8, npts = 1000):
-    """
-    finds the x-y trajectory of a projectile
+     
     
+    """     
     parameters
     ----------
     x0 : float 
@@ -44,7 +45,13 @@ def trajectory (x0,y0,v,theta,g = 9.8, npts = 1000):
     0.5g t^2 - vsin(theta) t - y0 = 0
     t_final = v/g sin(theta) + sqrt((v/g)^2 sin^2(theta) + 2 y0/g)
     """
-  
+    t_final = (v/g)*np.sin(theta*np.pi/180) + ((v/g)**2*(np.sin(theta*np.pi/180)**2)+2*y0/g)**1/2
+    t=np.linspace(0,t_final,npts)
+    x= x0 + v*np.cos(theta*np.pi/180)*t
+    y= y0 + v*np.sin(theta*np.pi/180)*t - 0.5*g*t**2
+    return x,y
+   
+   
 
 def firstInBox (x,y,box):
     """
@@ -65,7 +72,12 @@ def firstInBox (x,y,box):
         y[j] is in [bottom,top]
         -1 if the line x,y does not go through the box
     """
-
+    for j in range(len(x)):
+        if x[j]>box[0] and x[j]<box[1] and y[j]>box[2] and y[j]<box[3]:
+            return j
+        else:
+            return -1
+            
 
     
 
@@ -93,10 +105,19 @@ def tankShot (targetBox, obstacleBox, x0, y0, v, theta, g = 9.8):
         code: 0 = miss, 1 = hit
         
     hit if trajectory intersects target box before intersecting
-    obstacle box
+    obstacle box  #1 for hit the targe
+    #-1 for hitting nothing
+    #other positive numbers for hitting the obstacle box
     draws the truncated trajectory in current plot window
     """
-    
+    x,y=trajectory (x0,y0,v,theta,g = 9.8, npts = 1000)
+    x,y=endTrajectoryAtIntersection(x,y,obstacleBox)
+    plt.plot(x,y)
+    plt.show()
+    if firstInBox(x,y,targetBox)>=0:
+        return 1
+    else:
+        return 0
 
 
 def drawBoard (tank1box, tank2box, obstacleBox, playerNum):
@@ -115,10 +136,17 @@ def drawBoard (tank1box, tank2box, obstacleBox, playerNum):
  
     """    
     #your code here
-    
+    plt.clf()
+    drawBox(tank1box, tank1Color)
+    drawBox(tank2box, tank2Color)
+    drawBox(obstacleBox, obstacleColor)
+    plt.xlim(0,100)
+    plt.ylim(0,100)
     showWindow() #this makes the figure window show up
 
-def oneTurn (tank1box, tank2box, obstacleBox, playerNum, g = 9.8):   
+
+
+def oneTurn (tank1box, tank2box, obstacleBox, playerNum, g = 9.8):    
     """
     parameters
     ----------
@@ -142,9 +170,23 @@ def oneTurn (tank1box, tank2box, obstacleBox, playerNum, g = 9.8):
     prompts player for velocity and angle
     displays trajectory (shot originates from center of tank)
     returns 0 for miss, 1 or 2 for victory
-    """        
-
-    
+    """          
+    drawBoard(tank1box, tank2box, obstacleBox, playerNum)
+    v=float(getNumberInput ("Player"+str(playerNum)+"What is the initial velocity?", validRange = [-np.Inf, np.Inf]))
+    theta=float(getNumberInput ("Player"+str(playerNum)+"What is the initial angle?", validRange = [-np.Inf, np.Inf]))
+    if playerNum==1:
+        targetBox=tank2box
+        x0=12.5
+        y0=2.5
+    else:
+        targetBox=tank1box
+        x0=92.5
+        y0=2.5
+    plt.show(tankShot(targetBox, obstacleBox, x0, y0, v, theta, g = 9.8))
+    if tankShot(targetBox, obstacleBox, x0, y0, v, theta, g = 9.8)==1:
+        return 0
+    else:
+        return playerNum
 
 def playGame(tank1box, tank2box, obstacleBox, g = 9.8):
     """
@@ -161,7 +203,23 @@ def playGame(tank1box, tank2box, obstacleBox, g = 9.8):
      g : float 
         accel due to gravity (default 9.8)
     """
+    playerNum=1
+    returnvalue=oneTurn(tank1box, tank2box, obstacleBox, playerNum, g = 9.8)
+    while returnvalue!=0:
+        if playerNum==1:
+            playerNum=2
+            keepgoing=input("Press return to keep going.")
+            if keepgoing=="\n":
+                returnvalue=oneTurn(tank1box, tank2box, obstacleBox, playerNum, g = 9.8)
+        if playerNum==2:
+            playerNum=1
+            if keepgoing=="\n":
+                returnvalue=oneTurn(tank1box, tank2box, obstacleBox, playerNum, g = 9.8)
+            returnvalue=oneTurn(tank1box, tank2box, obstacleBox, playerNum, g = 9.8)
+    else:
+        print("Congratulations. Player:", playerNum)
     
+ 
     
         
 ##### functions provided to you #####
@@ -192,8 +250,7 @@ def getNumberInput (prompt, validRange = [-np.Inf, np.Inf]):
                 return num
             else:
                 print ("Please enter a value in the range [", validRange[0], ",", validRange[1], ")") #Python 3 sytanx
-            
-    return num    
+        return num   
 
 def showWindow():
     """
@@ -248,7 +305,9 @@ def main():
     tank1box = [10,15,0,5]
     tank2box = [90,95,0,5]
     obstacleBox = [40,60,0,50]
-    playGame(tank1box, tank2box, obstacleBox)
+    playGame(tank1box, tank2box, obstacleBox, g = 9.8)
+    
+    ###\playGame(tank1box, tank2box, obstacleBox)s
     
 
 #don't edit the lines below;
